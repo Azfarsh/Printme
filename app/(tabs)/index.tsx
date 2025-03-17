@@ -1,85 +1,92 @@
-import React from "react";
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { StyleSheet } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { Ionicons } from '@expo/vector-icons';
 
-const Dashboard: React.FC = () => {
+const Tab = createBottomTabNavigator();
+
+// Screen Components remain the same
+const HomeScreen = () => (
+  <ThemedView style={styles.container}>
+    <ThemedText style={styles.title}>Welcome to PrintMe</ThemedText>
+    <ThemedText style={styles.subtitle}>Your printing solution</ThemedText>
+  </ThemedView>
+);
+
+const LoginScreen = () => (
+  <ThemedView style={styles.container}>
+    <ThemedText style={styles.title}>Login</ThemedText>
+  </ThemedView>
+);
+
+const RegisterScreen = () => (
+  <ThemedView style={styles.container}>
+    <ThemedText style={styles.title}>Register</ThemedText>
+  </ThemedView>
+);
+
+const DashboardScreen = () => (
+  <ThemedView style={styles.container}>
+    <ThemedText style={styles.title}>Dashboard</ThemedText>
+  </ThemedView>
+);
+
+export default function TabNavigator() {
   return (
-    <div style={{
-      backgroundColor: "#141414", color: "#F4C430", minHeight: "100vh",
-      fontFamily: "Arial, sans-serif", padding: "20px", overflowY: "scroll"
-    }}>
-      {/* Header Section */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h1 style={{ fontSize: "24px", fontWeight: "bold" }}>PrintMe Dashboard</h1>
-        <button style={{ background: "#F4C430", color: "#141414", border: "none", padding: "10px 20px", cursor: "pointer", borderRadius: "5px" }}>Logout</button>
-      </div>
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap = 'home';
 
-      {/* Overview Section */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-        {["Total Users: 1,235", "Vendors: 58", "Active Print Jobs: 178"].map((stat, index) => (
-          <div key={index} style={{
-            background: "#1E1E1E", padding: "20px", borderRadius: "10px", boxShadow: "0px 0px 10px rgba(255, 215, 0, 0.5)"
-          }}>
-            <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{stat}</h2>
-          </div>
-        ))}
-      </div>
+          switch (route.name) {
+            case 'Home':
+              iconName = focused ? 'home' : 'home-outline';
+              break;
+            case 'Login':
+              iconName = focused ? 'log-in' : 'log-in-outline';
+              break;
+            case 'Register':
+              iconName = focused ? 'person-add' : 'person-add-outline';
+              break;
+            case 'Dashboard':
+              iconName = focused ? 'grid' : 'grid-outline';
+              break;
+          }
 
-      {/* Order Tracking Section */}
-      <div style={{ marginTop: "30px" }}>
-        <h2 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "10px" }}>Real-time Order Tracking</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-          {["Pending Orders: 76", "In Progress: 45", "Completed: 200"].map((order, index) => (
-            <div key={index} style={{
-              background: "#1E1E1E", padding: "20px", borderRadius: "10px", boxShadow: "0px 0px 10px rgba(255, 215, 0, 0.5)"
-            }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{order}</h2>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Analytics Section */}
-      <div style={{ marginTop: "30px" }}>
-        <h2 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "10px" }}>Print Analytics</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-          {["Daily Orders: 220", "Weekly Orders: 1,540", "Monthly Orders: 6,300"].map((data, index) => (
-            <div key={index} style={{
-              background: "#1E1E1E", padding: "20px", borderRadius: "10px", boxShadow: "0px 0px 10px rgba(255, 215, 0, 0.5)"
-            }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{data}</h2>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Financial Summary Section */}
-      <div style={{ marginTop: "30px" }}>
-        <h2 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "10px" }}>Financial Summary</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-          {["Total Earnings: $23,580", "Transactions: 9,230", "Pending Payments: $1,120"].map((finance, index) => (
-            <div key={index} style={{
-              background: "#1E1E1E", padding: "20px", borderRadius: "10px", boxShadow: "0px 0px 10px rgba(255, 215, 0, 0.5)"
-            }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{finance}</h2>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* System Monitoring */}
-      <div style={{ marginTop: "30px", marginBottom: "50px" }}>
-        <h2 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "10px" }}>System Monitoring</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px" }}>
-          {["Server Status: Active", "Printers Available: 12"].map((system, index) => (
-            <div key={index} style={{
-              background: "#1E1E1E", padding: "20px", borderRadius: "10px", boxShadow: "0px 0px 10px rgba(255, 215, 0, 0.5)"
-            }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{system}</h2>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#6C2BD9',
+        tabBarInactiveTintColor: 'gray',
+        headerStyle: {
+          backgroundColor: '#6C2BD9',
+        },
+        headerTintColor: '#fff',
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Login" component={LoginScreen} />
+      <Tab.Screen name="Register" component={RegisterScreen} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+    </Tab.Navigator>
   );
-};
+}
 
-export default Dashboard;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+});
