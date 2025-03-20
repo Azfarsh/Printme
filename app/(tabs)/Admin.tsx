@@ -1,210 +1,706 @@
-import { StyleSheet, View, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  ScrollView, 
+  StatusBar,
+  Animated,
+  SafeAreaView
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-type PrintOrder = {
-  id: string;
-  companyName: string;
-  location: string;
-  deliveryDate: string;
-  deliveryTime: string;
-  amount: string;
-  status: 'New' | 'Pending' | 'Paid';
-};
+// Mock data
+const initialPrintRequests = [
+  { id: 1, name: 'Emily Chen', time: '10:15 AM', status: 'pending', amount: 18.50 },
+  { id: 2, name: 'Marcus Wong', time: '10:30 AM', status: 'printing', amount: 7.50 },
+  { id: 3, name: 'Sarah Miller', time: '10:45 AM', status: 'completed', amount: 32.50 },
+  { id: 4, name: 'John Smith', time: '11:00 AM', status: 'pending', amount: 15.75 },
+  { id: 5, name: 'Laura Johnson', time: '11:15 AM', status: 'printing', amount: 9.25 },
+];
 
-export default function AdminDashboard() {
-  const [orders] = useState<PrintOrder[]>([
-    { id: '1', companyName: 'Nordic', location: 'Sabaheli Airport', deliveryDate: '10/10/2023', deliveryTime: '05:56 pm', amount: '$250.00', status: 'New' },
-    { id: '2', companyName: 'Cuberts', location: 'Starbucks Airport', deliveryDate: '25/11/2023', deliveryTime: '12:26 pm', amount: '$350.00', status: 'Pending' },
-    { id: '3', companyName: 'PaperStar', location: 'Salna International Airport', deliveryDate: '13/05/2023', deliveryTime: '07:26 pm', amount: '$1050.00', status: 'Paid' },
-    { id: '4', companyName: 'Green Chameleon', location: 'Kerala International Airport', deliveryDate: '20/02/2023', deliveryTime: '05:56 pm', amount: '$1250.00', status: 'Paid' },
-    { id: '5', companyName: 'UX8', location: 'Bluefields Airport', deliveryDate: '10/05/2023', deliveryTime: '06:07 am', amount: '$1250.00', status: 'Paid' },
-  ]);
+const initialPrinters = [
+  { id: 1, name: 'HP LaserJet Pro', status: 'operational', queue: 2, paper: 85, toner: 65 },
+  { id: 2, name: 'Xerox WorkCentre', status: 'warning', queue: 1, paper: 25, toner: 45 },
+  { id: 3, name: 'Canon ImageRunner', status: 'error', queue: 0, paper: 90, toner: 10 },
+];
+
+export default function PrintMeVendorPortal() {
+  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [printRequests, setPrintRequests] = useState(initialPrintRequests);
+  const [printers, setPrinters] = useState(initialPrinters);
+  const [dailyRevenue, setDailyRevenue] = useState(450.00);
+  const [completedJobs, setCompletedJobs] = useState(24);
+  const [activeTokens, setActiveTokens] = useState(8);
+  const [averageWaitTime, setAverageWaitTime] = useState(12);
+  
+  // Animations
+  const rotateAnim = useState(new Animated.Value(0))[0];
+  const opacity1 = useState(new Animated.Value(0))[0];
+  const opacity2 = useState(new Animated.Value(0))[0];
+  const opacity3 = useState(new Animated.Value(0))[0];
+  const opacity4 = useState(new Animated.Value(0))[0];
+  const translateY1 = useState(new Animated.Value(20))[0];
+  const translateY2 = useState(new Animated.Value(20))[0];
+
+  useEffect(() => {
+    // Start animations when component mounts
+    Animated.sequence([
+      Animated.timing(opacity1, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.timing(opacity2, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.timing(opacity3, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.timing(opacity4, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
+
+    Animated.parallel([
+      Animated.timing(translateY1, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(translateY2, { toValue: 0, duration: 700, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
+  const handleRefresh = () => {
+    Animated.timing(rotateAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true
+    }).start(() => {
+      rotateAnim.setValue(0);
+      // Add some randomization to the data
+      const shuffledRequests = [...printRequests].sort(() => Math.random() - 0.5);
+      setPrintRequests(shuffledRequests);
+      setDailyRevenue(Math.floor(400 + Math.random() * 100));
+      setCompletedJobs(Math.floor(20 + Math.random() * 10));
+    });
+  };
+
+  const handleClearCompleted = () => {
+    const filteredRequests = printRequests.filter(request => request.status !== 'completed');
+    setPrintRequests(filteredRequests);
+    // Update stats after clearing
+    setCompletedJobs(completedJobs - printRequests.filter(request => request.status === 'completed').length);
+  };
+
+  const handleAddPrinter = () => {
+    const newPrinter = {
+      id: printers.length + 1,
+      name: `New Printer ${printers.length + 1}`,
+      status: 'operational',
+      queue: 0,
+      paper: 100,
+      toner: 100
+    };
+    setPrinters([...printers, newPrinter]);
+  };
+
+  interface PrintRequest {
+    id: number;
+    name: string;
+    time: string;
+    status: string;
+    amount: number;
+  }
+
+  interface Printer {
+    id: number;
+    name: string;
+    status: string;
+    queue: number;
+    paper: number;
+    toner: number;
+  }
+
+  const getInitials = (name: string): string => {
+    return name.split(' ').map(n => n[0]).join('');
+  };
+
+  const getStatusColor = (status="") => {
+    switch(status) {
+      case 'pending': return '#F9D67A';
+      case 'printing': return '#7EDFA9';
+      case 'completed': return '#B4B4B4';
+      default: return '#B4B4B4';
+    }
+  };
+
+  const getStatusBgColor = (status="") => {
+    switch(status) {
+      case 'pending': return '#FFF8E7';
+      case 'printing': return '#E7FFF2';
+      case 'completed': return '#F5F5F5';
+      default: return '#F5F5F5';
+    }
+  };
+
+  const getPrinterStatusColor = (status="") => {
+    switch(status) {
+      case 'operational': return '#1AB369';
+      case 'warning': return '#FFA500';
+      case 'error': return '#FF0000';
+      default: return '#B4B4B4';
+    }
+  };
 
   return (
-    <ThemedView style={styles.mainContainer}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <View style={styles.profileSection}>
-              <View style={styles.avatar} />
-              <ThemedText style={styles.userName}>John Smith</ThemedText>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>40 × 40</Text>
+          </View>
+          <Text style={styles.title}>PrintMe Vendor Portal</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.notificationButton}>
+            <MaterialCommunityIcons name="bell-outline" size={24} color="#333" />
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>1</Text>
             </View>
-            <ThemedText style={styles.title}>Print Orders</ThemedText>
-            <TouchableOpacity style={styles.addButton}>
-              <ThemedText style={styles.addButtonText}>Add New Orders</ThemedText>
+          </TouchableOpacity>
+          <View style={styles.userAvatar}>
+            <Text style={styles.userInitials}>VA</Text>
+          </View>
+          <Text style={styles.userName}>Vendor Admin</Text>
+        </View>
+      </View>
+
+      {/* Sidebar and Content */}
+      <View style={styles.contentContainer}>
+        {/* Sidebar */}
+        <View style={styles.sidebar}>
+          {[
+            { name: 'Dashboard', icon: 'view-dashboard-outline' },
+            { name: 'Print Queue', icon: 'printer-check' },
+            { name: 'Printers', icon: 'printer' },
+            { name: 'Reports', icon: 'file-chart-outline' },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.name}
+              style={[
+                styles.sidebarItem,
+                activeTab === item.name && styles.activeSidebarItem,
+              ]}
+              onPress={() => setActiveTab(item.name)}
+            >
+              <MaterialCommunityIcons
+                //name={item.icon}
+                size={24}
+                color={activeTab === item.name ? '#4B34F5' : '#555'}
+              />
+              <Text
+                style={[
+                  styles.sidebarText,
+                  activeTab === item.name && styles.activeSidebarText,
+                ]}
+              >
+                {item.name}
+              </Text>
             </TouchableOpacity>
-          </View>
+          ))}
+        </View>
 
+        {/* Main Content */}
+        <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
+          {/* Stats Cards */}
           <View style={styles.statsContainer}>
-            <View style={[styles.statCard, { backgroundColor: '#E3F2FD' }]}>
-              <ThemedText style={styles.statNumber}>27500</ThemedText>
-              <ThemedText style={styles.statLabel}>Total Orders</ThemedText>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#E0F2F1' }]}>
-              <ThemedText style={styles.statNumber}>4500</ThemedText>
-              <ThemedText style={styles.statLabel}>Total Delivered</ThemedText>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#FCE4EC' }]}>
-              <ThemedText style={styles.statNumber}>1500</ThemedText>
-              <ThemedText style={styles.statLabel}>Pending Orders</ThemedText>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#FFEBEE' }]}>
-              <ThemedText style={styles.statNumber}>750</ThemedText>
-              <ThemedText style={styles.statLabel}>Orders Hold</ThemedText>
-            </View>
+            {/* Daily Revenue */}
+            <Animated.View style={[styles.statsCard, { opacity: opacity1 }]}>
+              <Text style={styles.statsTitle}>Daily Revenue</Text>
+              <Text style={styles.statsValue}>${dailyRevenue.toFixed(2)}</Text>
+              <View style={styles.progressBar}>
+                <LinearGradient
+                  colors={['#4B34F5', '#7B68FF']}
+                  style={styles.progressFill}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+              </View>
+            </Animated.View>
+
+            {/* Completed Jobs */}
+            <Animated.View style={[styles.statsCard, { opacity: opacity2 }]}>
+              <Text style={styles.statsTitle}>Completed Jobs</Text>
+              <Text style={styles.statsValue}>{completedJobs}</Text>
+              <View style={styles.statsChange}>
+                <MaterialCommunityIcons name="arrow-up" size={16} color="#1AB369" />
+                <Text style={styles.statsChangeText}>12% from yesterday</Text>
+              </View>
+            </Animated.View>
+
+            {/* Active Tokens */}
+            <Animated.View style={[styles.statsCard, { opacity: opacity3 }]}>
+              <Text style={styles.statsTitle}>Active Tokens</Text>
+              <Text style={styles.statsValue}>{activeTokens}</Text>
+              <View style={styles.statsNote}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statsNoteText}>All printers operational</Text>
+              </View>
+            </Animated.View>
+
+            {/* Average Wait Time */}
+            <Animated.View style={[styles.statsCard, { opacity: opacity4 }]}>
+              <Text style={styles.statsTitle}>Average Wait Time</Text>
+              <Text style={styles.statsValue}>{averageWaitTime} min</Text>
+              <View style={styles.statsChange}>
+                <MaterialCommunityIcons name="arrow-up" size={16} color="#FFA500" />
+                <Text style={[styles.statsChangeText, {color: '#FFA500'}]}>3 min from normal</Text>
+              </View>
+            </Animated.View>
           </View>
 
-          <View style={styles.tableContainer}>
-            <View style={styles.tableHeader}>
-              <ThemedText style={styles.columnHeader}>Company Name</ThemedText>
-              <ThemedText style={styles.columnHeader}>Location</ThemedText>
-              <ThemedText style={styles.columnHeader}>Delivery Date</ThemedText>
-              <ThemedText style={styles.columnHeader}>Amount</ThemedText>
-              <ThemedText style={styles.columnHeader}>Status</ThemedText>
+          {/* Print Requests */}
+          <Animated.View 
+            style={[styles.sectionContainer, {transform: [{translateY: translateY1}]}]}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Print Requests</Text>
+              <View style={styles.sectionActions}>
+                <TouchableOpacity 
+                  style={styles.sectionButton}
+                  onPress={handleClearCompleted}
+                >
+                  <Text style={styles.sectionButtonText}>Clear Completed</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.sectionButton, styles.refreshButton]}
+                  onPress={handleRefresh}
+                >
+                  <Animated.View style={{transform: [{rotate: spin}]}}>
+                    <MaterialCommunityIcons name="refresh" size={20} color="white" />
+                  </Animated.View>
+                  <Text style={[styles.sectionButtonText, styles.refreshButtonText]}>Refresh</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <ScrollView style={styles.tableContent}>
-              {orders.map((order) => (
-                <View key={order.id} style={styles.tableRow}>
-                  <ThemedText style={styles.cellText}>{order.companyName}</ThemedText>
-                  <ThemedText style={styles.cellText}>{order.location}</ThemedText>
-                  <ThemedText style={styles.cellText}>{`${order.deliveryDate}\n${order.deliveryTime}`}</ThemedText>
-                  <ThemedText style={styles.cellText}>{order.amount}</ThemedText>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
-                    <ThemedText style={styles.statusText}>{order.status}</ThemedText>
+            <View style={styles.requestsContainer}>
+              {printRequests.map((request) => (
+                <View key={request.id} style={styles.requestItem}>
+                  <View style={styles.requestInfo}>
+                    <View style={[styles.userInitialsContainer, {backgroundColor: getStatusColor(request.status)}]}>
+                      <Text style={styles.requestInitials}>{getInitials(request.name)}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.requestName}>{request.name}</Text>
+                      <Text style={styles.requestTime}>{request.time}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.requestStatus}>
+                    <View style={[styles.statusBadge, {backgroundColor: getStatusBgColor(request.status)}]}>
+                      <Text style={[styles.statusText, {color: getStatusColor(request.status)}]}>
+                        {request.status}
+                      </Text>
+                    </View>
+                    <Text style={styles.requestAmount}>${request.amount.toFixed(2)}</Text>
                   </View>
                 </View>
               ))}
-            </ScrollView>
-          </View>
-        </View>
-      </ScrollView>
-    </ThemedView>
+            </View>
+          </Animated.View>
+
+          {/* Printer Status */}
+          <Animated.View 
+            style={[styles.sectionContainer, {transform: [{translateY: translateY2}]}]}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Printer Status</Text>
+              <TouchableOpacity 
+                style={[styles.sectionButton, styles.refreshButton]}
+                onPress={handleAddPrinter}
+              >
+                <MaterialCommunityIcons name="plus" size={20} color="white" />
+                <Text style={[styles.sectionButtonText, styles.refreshButtonText]}>Add Printer</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.printersContainer}>
+              {printers.map((printer) => (
+                <View key={printer.id} style={styles.printerItem}>
+                  <View style={styles.printerHeader}>
+                    <Text style={styles.printerName}>{printer.name}</Text>
+                    <View style={[styles.printerStatusDot, {backgroundColor: getPrinterStatusColor(printer.status)}]} />
+                  </View>
+
+                  <View style={styles.printerStats}>
+                    <View style={styles.printerStat}>
+                      <Text style={styles.printerStatLabel}>Queue: {printer.queue}</Text>
+                    </View>
+                    <View style={styles.printerStat}>
+                      <Text style={styles.printerStatLabel}>Paper: {printer.paper}%</Text>
+                      <View style={styles.progressBarContainer}>
+                        <View 
+                          style={[
+                            styles.progressBarFill, 
+                            { 
+                              width: `${printer.paper}%`, 
+                              backgroundColor: printer.paper < 30 ? '#FF0000' : '#1AB369'
+                            }
+                          ]} 
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.printerStat}>
+                      <Text style={styles.printerStatLabel}>Toner: {printer.toner}%</Text>
+                      <View style={styles.progressBarContainer}>
+                        <View 
+                          style={[
+                            styles.progressBarFill, 
+                            { 
+                              width: `${printer.toner}%`, 
+                              backgroundColor: printer.toner < 30 ? '#FF0000' : '#1AB369'
+                            }
+                          ]} 
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'New': return '#E3F2FD';
-    case 'Pending': return '#FFF3E0';
-    case 'Paid': return '#E0F2F1';
-    default: return '#E0E0E0';
-  }
-};
-
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: '#F5F7FF',
-  },
-  scrollView: {
-    flex: 1,
-    backgroundColor: '#F5F7FF',
-  },
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#F5F7FF',
-    minHeight: '100%',
+    backgroundColor: '#F7F8FB',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    height: 70,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  profileSection: {
+  logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatar: {
+  logo: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#DDD',
-    marginRight: 12,
+    backgroundColor: '#F2F2F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 5,
+    marginRight: 10,
   },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
+  logoText: {
+    fontSize: 10,
+    color: '#777',
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationButton: {
+    marginRight: 16,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF3B30',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 10,
     fontWeight: 'bold',
   },
-  addButton: {
-    backgroundColor: '#6366F1',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+  userAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E1E1E1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
-  addButtonText: {
-    color: '#FFFFFF',
+  userInitials: {
     fontSize: 14,
+    fontWeight: 'bold',
+    color: '#777',
+  },
+  userName: {
+    fontSize: 14,
+    color: '#333',
+  },
+  contentContainer: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    width: 160,
+    backgroundColor: '#FFFFFF',
+    paddingTop: 20,
+    borderRightWidth: 1,
+    borderRightColor: '#E0E0E0',
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 15,
+    marginBottom: 5,
+  },
+  activeSidebarItem: {
+    backgroundColor: '#F0EEFF',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4B34F5',
+  },
+  sidebarText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#555',
+  },
+  activeSidebarText: {
+    color: '#4B34F5',
     fontWeight: '600',
+  },
+  mainContent: {
+    flex: 1,
+    padding: 16,
   },
   statsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 16,
   },
-  statCard: {
-    padding: 16,
-    borderRadius: 8,
-    width: '23%',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  tableContainer: {
-    flex: 1,
+  statsCard: {
+    width: '24%',
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  statsTitle: {
+    fontSize: 14,
+    color: '#777',
+    marginBottom: 8,
+  },
+  statsValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
     overflow: 'hidden',
   },
-  tableHeader: {
+  progressFill: {
+    height: '100%',
+    width: '70%',
+    borderRadius: 2,
+  },
+  statsChange: {
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    alignItems: 'center',
   },
-  columnHeader: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666666',
+  statsChangeText: {
+    fontSize: 12,
+    color: '#1AB369',
+    marginLeft: 4,
   },
-  tableContent: {
-    flex: 1,
-  },
-  tableRow: {
+  statsNote: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#1AB369',
+    marginRight: 6,
+  },
+  statsNoteText: {
+    fontSize: 12,
+    color: '#777',
+  },
+  sectionContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#E0E0E0',
   },
-  cellText: {
-    flex: 1,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sectionActions: {
+    flexDirection: 'row',
+  },
+  sectionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    backgroundColor: '#F5F5F5',
+    marginLeft: 8,
+  },
+  refreshButton: {
+    backgroundColor: '#4B34F5',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionButtonText: {
+    fontSize: 12,
+    color: '#333',
+  },
+  refreshButtonText: {
+    color: 'white',
+    marginLeft: 4,
+  },
+  requestsContainer: {
+    padding: 8,
+  },
+  requestItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  requestInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userInitialsContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  requestInitials: {
     fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  requestName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  requestTime: {
+    fontSize: 12,
+    color: '#777',
+    marginTop: 2,
+  },
+  requestStatus: {
+    alignItems: 'flex-end',
   },
   statusBadge: {
-    paddingHorizontal: 12,
     paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 4,
   },
   statusText: {
     fontSize: 12,
+  },
+  requestAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  printersContainer: {
+    padding: 8,
+  },
+  printerItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  printerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  printerName: {
+    fontSize: 15,
     fontWeight: '500',
+    color: '#333',
+  },
+  printerStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  printerStats: {
+    flexDirection: 'row',
+    backgroundColor: '#F7F8FB',
+    padding: 8,
+    borderRadius: 4,
+  },
+  printerStat: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  printerStatLabel: {
+    fontSize: 12,
+    color: '#777',
+    marginBottom: 4,
+  },
+  progressBarContainer: {
+    height: 6,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
   },
 });

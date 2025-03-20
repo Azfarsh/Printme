@@ -44,7 +44,7 @@ export default function TabLayout() {
         options={{
           title: 'Admin',
           tabBarIcon: ({ color }) => <Ionicons name="settings" size={24} color={color} />,
-          href: '/admin',
+          href: '/Admin',
         }}
       />
     </Tabs>
